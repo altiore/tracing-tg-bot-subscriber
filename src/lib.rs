@@ -1,4 +1,5 @@
 use crate::bot_writer::BotWriter;
+use telegram_bot::Api;
 use tracing::Metadata;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::Registry;
@@ -10,8 +11,10 @@ use tracing_subscriber::{
 mod bot_writer;
 mod config;
 
+static TELEGRAM_USER_ID: &str = "TELEGRAM_USER_ID";
+
 pub struct TracingTgBotSubscriber {
-    token: Option<String>,
+    api: Api,
     user_id: Option<i64>,
     /// Level of bot tracing level
     bot_level: tracing::Level,
@@ -19,23 +22,18 @@ pub struct TracingTgBotSubscriber {
     debug_level: tracing::Level,
 }
 
-pub fn new() -> TracingTgBotSubscriber {
-    TracingTgBotSubscriber::new()
+pub fn new(api: Api) -> TracingTgBotSubscriber {
+    TracingTgBotSubscriber::new(api)
 }
 
 impl TracingTgBotSubscriber {
-    fn new() -> Self {
+    fn new(api: Api) -> Self {
         TracingTgBotSubscriber {
-            token: None,
+            api,
             user_id: None,
             bot_level: tracing::Level::ERROR,
             debug_level: tracing::Level::WARN,
         }
-    }
-
-    pub fn set_token(mut self, token: &str) -> Self {
-        self.token = Some(token.to_owned());
-        self
     }
 
     pub fn set_user_id(mut self, user_id: i64) -> Self {
@@ -54,25 +52,15 @@ impl TracingTgBotSubscriber {
     }
 
     pub fn register(mut self) {
-        if let None = self.token {
-            match config::get_var("TELEGRAM_BOT_TOKEN") {
-                Ok(token) => {self.token = Some(token)}
-                Err(err) => match err {
-                    config::ConfigError::NotPresent(_) => panic!("Please set up TELEGRAM_BOT_TOKEN env variable or use .set_token method for that"),
-                    config::ConfigError::NotUnicode(_, _) => panic!("Incorrect format of TELEGRAM_BOT_TOKEN env variable")
-                }
-            }
-        }
-
         if let None = self.user_id {
-            match config::get_var("TELEGRAM_USER_ID") {
+            match config::get_var(TELEGRAM_USER_ID) {
                 Ok(user_id) => match user_id.parse::<i64>() {
                     Ok(user_id) => {self.user_id = Some(user_id)},
-                    Err(_) => panic!("Incorrect format for TELEGRAM_USER_ID variable. Must be i64 number")
+                    Err(_) => panic!("Incorrect format for {TELEGRAM_USER_ID} variable. Must be i64 number")
                 }
                 Err(err) => match err {
-                    config::ConfigError::NotPresent(_) => panic!("Please set up TELEGRAM_BOT_TOKEN env variable or use .set_token method for that"),
-                    config::ConfigError::NotUnicode(_, _) => panic!("Incorrect format of TELEGRAM_BOT_TOKEN env variable")
+                    config::ConfigError::NotPresent(_) => panic!("Please set up {TELEGRAM_USER_ID} env variable or use .set_token method for that"),
+                    config::ConfigError::NotUnicode(_, _) => panic!("Incorrect format of {TELEGRAM_USER_ID} env variable")
                 }
             }
         }
@@ -105,13 +93,7 @@ impl<'a> MakeWriter<'a> for TracingTgBotSubscriber {
     type Writer = BotWriter;
 
     fn make_writer(&'a self) -> Self::Writer {
-        let token = match &self.token {
-            Some(token) => token,
-            None => panic!(
-                "Please set up TELEGRAM_BOT_TOKEN env variable or use .set_token method for that"
-            ),
-        };
-        BotWriter::new(token, self.user_id.unwrap())
+        BotWriter::new(self.api.clone(), self.user_id.unwrap())
     }
 
     fn make_writer_for(&'a self, _meta: &Metadata<'_>) -> Self::Writer {
