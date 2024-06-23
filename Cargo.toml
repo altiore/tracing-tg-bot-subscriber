@@ -1,0 +1,21 @@
+[package]
+name = "tracing-tg-bot-subscriber"
+version = "0.1.0"
+edition = "2021"
+authors = ["Pavel Belik <i@pavel-i-tel.ru>"]
+
+description = "A library for tracing your application error using telegram bot. Mostly, inside telegra bot applications"
+
+#documentation = "https://docs.rs/telegram-bot/"
+#repository = "https://github.com/telegram-rs/telegram-bot"
+readme = "./README.md"
+
+keywords = ["telegram", "bot", "api", "tracing", "trace"]
+categories = ["api-bindings", "asynchronous"]
+license = "MIT"
+
+[dependencies]
+telegram-bot = { git = "https://github.com/altiore/telegram-bot.git" }
+tokio = { version = "1.38.0" }
+tracing-subscriber = "0.3.18"
+tracing = "0.1.40"
