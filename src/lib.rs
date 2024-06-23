@@ -1,6 +1,4 @@
 use crate::bot_writer::BotWriter;
-use std::io::Write;
-use telegram_bot::*;
 use tracing::Metadata;
 use tracing_subscriber::prelude::*;
 use tracing_subscriber::Registry;

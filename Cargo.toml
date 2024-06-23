@@ -6,8 +6,8 @@ authors = ["Pavel Belik <i@pavel-i-tel.ru>"]
 
 description = "A library for tracing your application error using telegram bot. Mostly, inside telegra bot applications"
 
-#documentation = "https://docs.rs/telegram-bot/"
-#repository = "https://github.com/telegram-rs/telegram-bot"
+#documentation = "https://docs.rs/tracing-tg-bot-subscriber/"
+repository = "https://github.com/altiore/tracing-tg-bot-subscriber"
 readme = "./README.md"
 
 keywords = ["telegram", "bot", "api", "tracing", "trace"]
