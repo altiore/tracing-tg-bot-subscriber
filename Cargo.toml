@@ -9,7 +9,7 @@ description = "A library for tracing your application error using telegram bot. 
 # TODO: использовать верный путь к документации
 #documentation = "https://docs.rs/tracing-tg-bot-subscriber/"
 repository = "https://github.com/altiore/tracing-tg-bot-subscriber"
-readme = "./README.md"
+readme = "README.md"
 
 keywords = ["telegram", "bot", "api", "tracing", "trace"]
 categories = ["api-bindings", "asynchronous"]
