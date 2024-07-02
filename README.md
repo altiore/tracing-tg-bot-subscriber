@@ -32,6 +32,7 @@ use tracing::Level;
 
 fn main() {
     // TELEGRAM_USER_ID env variable in use
+    // if not specified, it will not lead any errors or warnings, but will not send messages to admin
     // Default bot tracing level is Level::ERROR
     // Default debug tracing level is Level::WARN
     let api = Api::new(config.bot_key());

@@ -8,7 +8,13 @@ pub enum ConfigError {
 
 pub fn get_var(name: &str) -> Result<String, ConfigError> {
     match env::var(name) {
-        Ok(token) => Ok(token),
+        Ok(token) => {
+            if token == "" {
+                Err(ConfigError::NotPresent(name.to_owned()))
+            } else {
+                Ok(token)
+            }
+        }
         Err(err) => match err {
             env::VarError::NotPresent => Err(ConfigError::NotPresent(name.to_owned())),
             env::VarError::NotUnicode(ref s) => Err(ConfigError::NotUnicode(

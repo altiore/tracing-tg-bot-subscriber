@@ -55,13 +55,17 @@ impl TracingTgBotSubscriber {
         if let None = self.user_id {
             match config::get_var(TELEGRAM_USER_ID) {
                 Ok(user_id) => match user_id.parse::<i64>() {
-                    Ok(user_id) => {self.user_id = Some(user_id)},
-                    Err(_) => panic!("Incorrect format for {TELEGRAM_USER_ID} variable. Must be i64 number")
-                }
+                    Ok(user_id) => self.user_id = Some(user_id),
+                    Err(_) => panic!(
+                        "Incorrect format for {TELEGRAM_USER_ID} variable. Must be i64 number"
+                    ),
+                },
                 Err(err) => match err {
-                    config::ConfigError::NotPresent(_) => panic!("Please set up {TELEGRAM_USER_ID} env variable or use .set_token method for that"),
-                    config::ConfigError::NotUnicode(_, _) => panic!("Incorrect format of {TELEGRAM_USER_ID} env variable")
-                }
+                    config::ConfigError::NotPresent(_) => {}
+                    config::ConfigError::NotUnicode(_, _) => {
+                        panic!("Incorrect format of {TELEGRAM_USER_ID} env variable")
+                    }
+                },
             }
         }
 
@@ -72,20 +76,34 @@ impl TracingTgBotSubscriber {
             .with_ansi(false)
             .compact();
 
-        let bot_level = self.bot_level.clone();
-        let bot_informer = Layer::default()
-            .event_format(format)
-            .with_writer(self)
-            .with_filter(LevelFilter::from_level(bot_level));
+        match self.user_id {
+            Some(_) => {
+                let bot_level = self.bot_level.clone();
+                let bot_informer = Layer::default()
+                    .event_format(format)
+                    .with_writer(self)
+                    .with_filter(LevelFilter::from_level(bot_level));
 
-        if let Err(err) = tracing::subscriber::set_global_default(
-            Registry::default().with(logs).with(bot_informer),
-        ) {
-            panic!(
-                "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
-                err
-            );
-        };
+                if let Err(err) = tracing::subscriber::set_global_default(
+                    Registry::default().with(logs).with(bot_informer),
+                ) {
+                    panic!(
+                        "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
+                        err
+                    );
+                };
+            }
+            None => {
+                if let Err(err) =
+                    tracing::subscriber::set_global_default(Registry::default().with(logs))
+                {
+                    panic!(
+                        "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
+                        err
+                    );
+                };
+            }
+        }
     }
 }
 
