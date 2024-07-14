@@ -2,9 +2,20 @@ use std::io::Write;
 use telegram_bot::*;
 use tokio::task;
 
+fn truncate(s: &str, max_chars: usize) -> String {
+    match s.char_indices().nth(max_chars) {
+        None => String::from(s),
+        Some((idx, _)) => String::from(&s[..idx]),
+    }
+}
+
 async fn send_to_admin(api: Api, user_id: i64, text: String) {
     if let Err(err) = api
-        .send(UserId::new(user_id).text(text).parse_mode(ParseMode::Html))
+        .send(
+            UserId::new(user_id)
+                .text(truncate(&text, 3000))
+                .parse_mode(ParseMode::Html),
+        )
         .await
     {
         // TODO: записывать неудачные попытки отправки в файл
