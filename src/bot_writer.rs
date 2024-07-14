@@ -1,9 +1,12 @@
-use std::io::{Write};
+use std::io::Write;
 use telegram_bot::*;
 use tokio::task;
 
 async fn send_to_admin(api: Api, user_id: i64, text: String) {
-    if let Err(err) = api.send(UserId::new(user_id).text(text)).await {
+    if let Err(err) = api
+        .send(UserId::new(user_id).text(text).parse_mode(ParseMode::Html))
+        .await
+    {
         // TODO: записывать неудачные попытки отправки в файл
         println!("Не удалось отправить личное сообщение: {:#?}", err);
     }
@@ -33,7 +36,9 @@ impl Write for BotWriter {
                 task::spawn(send_to_admin(
                     self.api.clone(),
                     self.admin_id,
-                    text.to_owned(),
+                    text.replace("\u{1b}[3m", "\n    <b>")
+                        .replace("\u{1b}[0m\u{1b}[2m", "</b> <i>")
+                        .replace("\u{1b}[0m", "</i> "),
                 ));
 
                 Ok(())
