@@ -17,11 +17,9 @@ pub struct TracingTgBotSubscriber {
     api: Api,
     user_id: Option<i64>,
     /// Level of bot tracing level
-    bot_level: tracing::Level,
+    bot_level: Option<tracing::Level>,
     /// Level of debug process tracing level
     debug_level: tracing::Level,
-    /// Disable bot if we don't wish to use it
-    bot_enabled: bool,
 }
 
 pub fn new(api: Api) -> TracingTgBotSubscriber {
@@ -33,9 +31,8 @@ impl TracingTgBotSubscriber {
         TracingTgBotSubscriber {
             api,
             user_id: None,
-            bot_level: tracing::Level::ERROR,
+            bot_level: None,
             debug_level: tracing::Level::WARN,
-            bot_enabled: true,
         }
     }
 
@@ -45,17 +42,12 @@ impl TracingTgBotSubscriber {
     }
 
     pub fn set_bot_level(mut self, level: tracing::Level) -> Self {
-        self.bot_level = level;
+        self.bot_level = Some(level);
         self
     }
 
     pub fn set_debug_level(mut self, level: tracing::Level) -> Self {
         self.debug_level = level;
-        self
-    }
-
-    pub fn disable_bot(mut self) -> Self {
-        self.bot_enabled = false;
         self
     }
 
@@ -85,10 +77,8 @@ impl TracingTgBotSubscriber {
             .compact();
 
         match self.user_id {
-            Some(_) => {
-                let bot_level = self.bot_level.clone();
-
-                if self.bot_enabled {
+            Some(_) => match self.bot_level {
+                Some(bot_level) => {
                     let bot_informer = Layer::default()
                         .event_format(format)
                         .with_writer(self)
@@ -98,21 +88,22 @@ impl TracingTgBotSubscriber {
                         Registry::default().with(logs).with(bot_informer),
                     ) {
                         panic!(
-                            "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
-                            err
-                        );
+                                "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
+                                err
+                            );
                     };
-                } else {
+                }
+                None => {
                     if let Err(err) =
                         tracing::subscriber::set_global_default(Registry::default().with(logs))
                     {
                         panic!(
-                            "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
-                            err
-                        );
+                                "Ошибка при подключении глобального подписчика консольного вывода: {:#?}",
+                                err
+                            );
                     };
                 }
-            }
+            },
             None => {
                 if let Err(err) =
                     tracing::subscriber::set_global_default(Registry::default().with(logs))
