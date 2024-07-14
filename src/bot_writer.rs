@@ -1,9 +1,10 @@
-use std::io::{Stdout, Write};
+use std::io::{Write};
 use telegram_bot::*;
 use tokio::task;
 
 async fn send_to_admin(api: Api, user_id: i64, text: String) {
     if let Err(err) = api.send(UserId::new(user_id).text(text)).await {
+        // TODO: записывать неудачные попытки отправки в файл
         println!("Не удалось отправить личное сообщение: {:#?}", err);
     }
 }
@@ -11,24 +12,19 @@ async fn send_to_admin(api: Api, user_id: i64, text: String) {
 pub struct BotWriter {
     admin_id: i64,
     api: Api,
-    writer: Stdout,
 }
 impl BotWriter {
     pub fn new(api: Api, admin_id: i64) -> Self {
-        BotWriter {
-            admin_id,
-            api,
-            writer: std::io::stdout(),
-        }
+        BotWriter { admin_id, api }
     }
 }
 impl Write for BotWriter {
-    fn write(&mut self, buf: &[u8]) -> std::io::Result<usize> {
-        self.writer.write(buf)
+    fn write(&mut self, _buf: &[u8]) -> std::io::Result<usize> {
+        Ok(0)
     }
 
     fn flush(&mut self) -> std::io::Result<()> {
-        self.writer.flush()
+        Ok(())
     }
 
     fn write_all(&mut self, buf: &[u8]) -> std::io::Result<()> {
@@ -40,7 +36,7 @@ impl Write for BotWriter {
                     text.to_owned(),
                 ));
 
-                self.writer.write_all(buf)
+                Ok(())
             }
             Err(err) => Err(std::io::Error::new(std::io::ErrorKind::InvalidData, err)),
         }
