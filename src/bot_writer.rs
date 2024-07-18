@@ -1,3 +1,4 @@
+use std::fs::OpenOptions;
 use std::io::Write;
 use telegram_bot::*;
 use tokio::task;
@@ -11,15 +12,26 @@ fn truncate(s: &str, max_chars: usize) -> String {
 
 async fn send_to_admin(api: Api, user_id: i64, text: String) {
     if let Err(err) = api
-        .send(
+        .send_no_error_trace(
             UserId::new(user_id)
                 .text(truncate(&text, 3000))
                 .parse_mode(ParseMode::Html),
         )
         .await
     {
-        // TODO: записывать неудачные попытки отправки в файл
-        println!("Не удалось отправить личное сообщение: {:#?}", err);
+        let mut file = OpenOptions::new()
+            .write(true)
+            .append(true)
+            .open("telegram-error-logs.log")
+            .expect("Файл telegram-error-logs.log не найден");
+
+        if let Err(e) = writeln!(
+            file,
+            "\n\nНе удалось отправить администратору оповещение:\n{}\nиз-за ошибки:\n\n{:#?}",
+            text, err
+        ) {
+            eprintln!("Couldn't write to file: {}", e);
+        }
     }
 }
 
