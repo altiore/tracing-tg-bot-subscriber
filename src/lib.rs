@@ -1,3 +1,5 @@
+// use std::future::Future;
+// use std::pin::Pin;
 use crate::bot_writer::BotWriter;
 use telegram_bot::Api;
 use tracing::Metadata;
@@ -20,19 +22,26 @@ pub struct TracingTgBotSubscriber {
     bot_level: Option<tracing::Level>,
     /// Level of debug process tracing level
     debug_level: tracing::Level,
+    // Пример сохранения функции, чтоб позже её вызвать и отправить оповещение
+    // f: Box<dyn Fn(String) -> Pin<Box<dyn Future<Output = ()>>> + Send + Sync + 'static>,
 }
+
+// pub fn new(api: Api, f: impl Fn(String) -> Pin<Box<dyn Future<Output = ()>>> + Send + Sync + 'static) -> TracingTgBotSubscriber {
+//     TracingTgBotSubscriber::new(api, f)
+// }
 
 pub fn new(api: Api) -> TracingTgBotSubscriber {
     TracingTgBotSubscriber::new(api)
 }
 
 impl TracingTgBotSubscriber {
-    fn new(api: Api) -> Self {
+    fn new(api: Api/*, f: impl Fn(String) -> Pin<Box<dyn Future<Output = ()>>> + Send + Sync + 'static*/) -> Self {
         TracingTgBotSubscriber {
             api,
             user_id: None,
             bot_level: None,
             debug_level: tracing::Level::WARN,
+            // f: Box::new(f),
         }
     }
 
@@ -71,14 +80,14 @@ impl TracingTgBotSubscriber {
 
         let logs = Layer::default().with_filter(LevelFilter::from_level(self.debug_level));
 
-        let format = tracing_subscriber::fmt::format()
-            .without_time()
-            .with_ansi(false)
-            .compact();
-
         match self.user_id {
             Some(_) => match self.bot_level {
                 Some(bot_level) => {
+                    let format = tracing_subscriber::fmt::format()
+                        .without_time()
+                        .with_ansi(false)
+                        .compact();
+
                     let bot_informer = Layer::default()
                         .event_format(format)
                         .with_writer(self)
