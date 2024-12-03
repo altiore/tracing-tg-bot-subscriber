@@ -35,7 +35,9 @@ pub fn new(api: Api) -> TracingTgBotSubscriber {
 }
 
 impl TracingTgBotSubscriber {
-    fn new(api: Api/*, f: impl Fn(String) -> Pin<Box<dyn Future<Output = ()>>> + Send + Sync + 'static*/) -> Self {
+    fn new(
+        api: Api, /*, f: impl Fn(String) -> Pin<Box<dyn Future<Output = ()>>> + Send + Sync + 'static*/
+    ) -> Self {
         TracingTgBotSubscriber {
             api,
             user_id: None,
